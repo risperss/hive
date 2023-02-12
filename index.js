@@ -1,28 +1,4 @@
-// if (adjacency === "right") {
-//     this.x = parentHexagon.x + 2 * parentHexagon.r;
-//     this.y = parentHexagon.y;
-//   } else if (adjacency === "left") {
-//     this.x = parentHexagon.x - 2 * parentHexagon.r;
-//     this.y = parentHexagon.y;
-//   } else if (adjacency === "northeast") {
-//     this.x = parentHexagon.x + parentHexagon.r;
-//     this.y = parentHexagon.y - 1.5 * parentHexagon.R;
-//   } else if (adjacency === "northwest") {
-//     this.x = parentHexagon.x - parentHexagon.r;
-//     this.y = parentHexagon.y - 1.5 * parentHexagon.R;
-//   } else if (adjacency === "southeast") {
-//     this.x = parentHexagon.x + parentHexagon.r;
-//     this.y = parentHexagon.y + 1.5 * parentHexagon.R;
-//   } else if (adjacency === "southwest") {
-//     this.x = parentHexagon.x - parentHexagon.r;
-//     this.y = parentHexagon.y + 1.5 * parentHexagon.R;
-//   } else {
-//     throw new Error("Invalid adjacency value");
-//   }
-// Saving above for later
-
 class Hexagon {
-  // TODO: pass in a object this is a quick hack
   constructor(col, row, r, empty) {
     const M_COS_30 = 0.8660254037844386;
     this.r = r;
