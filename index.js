@@ -6,14 +6,35 @@ class Hexagon {
 
     this.col = col;
     this.row = row;
-    this.empty = empty;
-    this.adjacent = adjacent;
+
+    // state
+    this.state = {};
+    this.state.empty = empty;
+    this.state.adjacent = adjacent;
 
     // Using doubled height coordinates https://www.redblobgames.com/grids/hexagons/#coordinates-doubled
     this.x = 1.5 * this.circumradius * col;
     this.y = this.inradius * row;
 
+    this.initialState = structuredClone(this.state);
+
     this.initDomObject();
+  }
+
+  getEmpty() {
+    return this.state.empty;
+  }
+
+  setEmpty(empty) {
+    this.state.empty = empty;
+  }
+
+  setAdjacent(adjacent) {
+    this.state.adjacent = adjacent;
+  }
+
+  getAdjacent(adjacent) {
+    return this.state.adjacent;
   }
 
   initDomObject() {
@@ -62,10 +83,10 @@ class Hexagon {
   }
 
   setFill() {
-    if (!this.empty) {
+    if (!this.getEmpty()) {
       this.domObject.setAttribute("fill", "black");
     } else {
-      if (this.adjacent) {
+      if (this.getAdjacent()) {
         this.domObject.setAttribute("fill", "yellow");
       } else {
         this.domObject.setAttribute("fill", "gray");
@@ -73,9 +94,20 @@ class Hexagon {
     }
   }
 
-  refresh() {
+  rerender() {
+    this.initialState = this.state;
     this.domObject.remove();
     this.initDomObject();
+  }
+
+  hasChanged() {
+    return this.initialState != this.state;
+  }
+
+  draw() {
+    if (this.hasChanged()) {
+      this.rerender();
+    }
   }
 }
 
@@ -91,14 +123,14 @@ function testDrawFromIndex() {
     const [col, row] = coord;
 
     const hexagon = new Hexagon(col, row, 30, true, false);
-    hexagon.empty = false;
-    hexagon.refresh();
+    hexagon.setEmpty(false);
+    hexagon.draw();
   });
 }
 
 class Board {
   constructor(cols, rows) {
-    this.inradius = 30;
+    this.inradius = 10;
     this.cols = cols;
     this.rows = 2 * rows;
 
@@ -134,25 +166,25 @@ class Board {
     }
   }
 
-  getPiece(col, row) {
+  getHexagon(col, row) {
     this.validateCoord(col, row);
 
     return this.board[col][row];
   }
 
-  setPiece(col, row) {
+  setHexagon(col, row) {
     this.validateCoord(col, row);
 
-    const piece = this.getPiece(col, row);
+    const hexagon = this.getHexagon(col, row);
 
-    piece.empty = false;
-    piece.adjacent = false;
+    hexagon.setEmpty(false);
+    hexagon.setAdjacent(false);
   }
 
   draw() {
     for (let col = 0; col < this.cols; col++) {
       for (let row = col % 2; row < this.rows; row += 2) {
-        this.getPiece(col, row).refresh();
+        this.getHexagon(col, row).draw();
       }
     }
   }
@@ -169,17 +201,17 @@ class Board {
 
     for (let col = 0; col < this.cols; col++) {
       for (let row = col % 2; row < this.rows; row += 2) {
-        const hexagon = this.getPiece(col, row);
+        const hexagon = this.getHexagon(col, row);
 
-        if (!hexagon.empty) {
+        if (!hexagon.getEmpty()) {
           adjacentsCoords.forEach((coord) => {
             const [adjCol, adjRow] = coord;
             const [c, r] = [col + adjCol, row + adjRow];
 
             if (this.isValidCoord(c, r)) {
-              const adjHexagon = this.getPiece(c, r);
-              if (adjHexagon.empty) {
-                adjHexagon.adjacent = true;
+              const adjHexagon = this.getHexagon(c, r);
+              if (adjHexagon.getEmpty()) {
+                adjHexagon.setAdjacent(true);
               }
             }
           });
@@ -192,19 +224,19 @@ class Board {
 function testDrawBoard() {
   const board = new Board(8, 4);
 
-  board.setPiece(2, 2);
-  board.getPiece(2, 4).adjacent = true;
+  board.setHexagon(2, 2);
+  board.getHexagon(2, 4).setAdjacent(true);
 
   board.draw();
 }
 
 function testCalculateBorder() {
-  const board = new Board(8, 4);
+  const board = new Board(20, 20);
 
-  board.setPiece(2, 2);
-  board.setPiece(2, 4);
-  board.setPiece(3, 5);
-  board.setPiece(4, 6);
+  board.setHexagon(2, 2);
+  board.setHexagon(2, 4);
+  board.setHexagon(3, 5);
+  board.setHexagon(4, 6);
   board.calculateBorder();
 
   board.draw();
