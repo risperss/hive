@@ -45,6 +45,7 @@ class Hexagon {
       "polygon"
     );
     this.domObject.setAttribute("points", points);
+    this.domObject.setAttribute("stroke", "red");
     this.setFill();
 
     document.getElementById("board").appendChild(this.domObject);
@@ -181,6 +182,15 @@ class Board {
     hexagon.setAdjacent(false);
   }
 
+  resetHexagon(col, row) {
+    this.validateCoord(col, row);
+
+    const hexagon = this.getHexagon(col, row);
+
+    hexagon.setEmpty(true);
+    hexagon.setAdjacent(false);
+  }
+
   draw() {
     for (let col = 0; col < this.cols; col++) {
       for (let row = col % 2; row < this.rows; row += 2) {
@@ -222,7 +232,7 @@ class Board {
 }
 
 function testDrawBoard() {
-  const board = new Board(8, 4);
+  const board = new Board(40, 20);
 
   board.setHexagon(2, 2);
   board.getHexagon(2, 4).setAdjacent(true);
@@ -237,6 +247,10 @@ function testCalculateBorder() {
   board.setHexagon(2, 4);
   board.setHexagon(3, 5);
   board.setHexagon(4, 6);
+  board.calculateBorder();
+
+  board.setHexagon(10, 10);
+  board.resetHexagon(2, 4);
   board.calculateBorder();
 
   board.draw();
