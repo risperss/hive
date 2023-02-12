@@ -1,12 +1,62 @@
 class Hexagon {
-  constructor(x, y) {
+  // TODO: pass in a object this is a quick hack
+  constructor(p1, p2, relative) {
     const M_COS_30 = 0.8660254037844386;
-
     this.r = 30;
     this.R = this.r / M_COS_30;
 
+    if (!relative) {
+      this.rawInit(p1, p2);
+    } else {
+      this.relativeInit(p1, p2);
+    }
+  }
+
+  rawInit(x, y) {
     this.x = x;
     this.y = y;
+
+    this.adjacentHexagons = {
+      right: null,
+      left: null,
+      northeast: null,
+      northwest: null,
+      southeast: null,
+      southwest: null,
+    };
+  }
+
+  relativeInit(parentHexagon, adjacency) {
+    if (adjacency === "right") {
+      this.x = parentHexagon.x + 2 * parentHexagon.r;
+      this.y = parentHexagon.y;
+    } else if (adjacency === "left") {
+      this.x = parentHexagon.x - 2 * parentHexagon.r;
+      this.y = parentHexagon.y;
+    } else if (adjacency === "northeast") {
+      this.x = parentHexagon.x + parentHexagon.r;
+      this.y = parentHexagon.y - 1.5 * parentHexagon.R;
+    } else if (adjacency === "northwest") {
+      this.x = parentHexagon.x - parentHexagon.r;
+      this.y = parentHexagon.y - 1.5 * parentHexagon.R;
+    } else if (adjacency === "southeast") {
+      this.x = parentHexagon.x + parentHexagon.r;
+      this.y = parentHexagon.y + 1.5 * parentHexagon.R;
+    } else if (adjacency === "southwest") {
+      this.x = parentHexagon.x - parentHexagon.r;
+      this.y = parentHexagon.y + 1.5 * parentHexagon.R;
+    } else {
+      throw new Error("Invalid adjacency value");
+    }
+
+    this.adjacentHexagons = {
+      right: null,
+      left: null,
+      northeast: null,
+      northwest: null,
+      southeast: null,
+      southwest: null,
+    };
   }
 
   coords() {
@@ -40,7 +90,7 @@ class Hexagon {
     return coordString.trim();
   }
 
-  draw() {
+  draw(empty) {
     const hexagon = document.createElementNS(
       "https://www.w3.org/2000/svg",
       "polygon"
@@ -49,42 +99,37 @@ class Hexagon {
     const points = this.coordsToString(this.coords(this.x, this.y));
     hexagon.setAttribute("points", points);
 
+    if (empty) {
+      hexagon.setAttribute("fill", "none");
+      hexagon.setAttribute("stroke", "black");
+    }
+
     document.getElementById("board").appendChild(hexagon);
     // It doesn't work without this line
     document.getElementById("board").innerHTML += "";
   }
-}
 
-function newAdjacent(hexagon, adjacency) {
-  let x, y;
+  drawEmptyAdjacents() {
+    const adjacencies = [
+      "right",
+      "left",
+      "northeast",
+      "northwest",
+      "southeast",
+      "southwest",
+    ];
 
-  if (adjacency === "right") {
-    x = hexagon.x + 2 * hexagon.r;
-    y = hexagon.y;
-  } else if (adjacency === "left") {
-    x = hexagon.x - 2 * hexagon.r;
-    y = hexagon.y;
-  } else if (adjacency === "northeast") {
-    x = hexagon.x + hexagon.r;
-    y = hexagon.y - 1.5 * hexagon.R;
-  } else if (adjacency === "northwest") {
-    x = hexagon.x - hexagon.r;
-    y = hexagon.y - 1.5 * hexagon.R;
-  } else if (adjacency === "southeast") {
-    x = hexagon.x + hexagon.r;
-    y = hexagon.y + 1.5 * hexagon.R;
-  } else if (adjacency === "southwest") {
-    x = hexagon.x - hexagon.r;
-    y = hexagon.y + 1.5 * hexagon.R;
-  } else {
-    return;
+    for (let i = 0; i < 6; i++) {
+      if (!this.adjacentHexagons[i]) {
+        const emptyHex = new Hexagon(this, adjacencies[i], true);
+        emptyHex.draw(true);
+      }
+    }
   }
-
-  return new Hexagon(x, y);
 }
 
 function testAdjacency() {
-  const hexagon = new Hexagon(100, 100);
+  const hexagon = new Hexagon(100, 100, false);
   hexagon.draw();
 
   const adjacencies = [
@@ -97,7 +142,14 @@ function testAdjacency() {
   ];
 
   adjacencies.forEach((adjacency) => {
-    const hex = newAdjacent(hexagon, adjacency);
-    hex.draw();
+    const hex = new Hexagon(hexagon, adjacency, true);
+    hex.draw(false);
   });
+}
+
+function testEmptyAdjacents() {
+  const hexagon = new Hexagon(100, 100, false);
+  hexagon.draw();
+
+  hexagon.drawEmptyAdjacents();
 }
