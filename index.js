@@ -15,15 +15,6 @@ class Hexagon {
   rawInit(x, y) {
     this.x = x;
     this.y = y;
-
-    this.adjacentHexagons = {
-      right: null,
-      left: null,
-      northeast: null,
-      northwest: null,
-      southeast: null,
-      southwest: null,
-    };
   }
 
   relativeInit(parentHexagon, adjacency) {
@@ -48,15 +39,6 @@ class Hexagon {
     } else {
       throw new Error("Invalid adjacency value");
     }
-
-    this.adjacentHexagons = {
-      right: null,
-      left: null,
-      northeast: null,
-      northwest: null,
-      southeast: null,
-      southwest: null,
-    };
   }
 
   coords() {
@@ -108,24 +90,6 @@ class Hexagon {
     // It doesn't work without this line
     document.getElementById("board").innerHTML += "";
   }
-
-  drawEmptyAdjacents() {
-    const adjacencies = [
-      "right",
-      "left",
-      "northeast",
-      "northwest",
-      "southeast",
-      "southwest",
-    ];
-
-    for (let i = 0; i < 6; i++) {
-      if (!this.adjacentHexagons[i]) {
-        const emptyHex = new Hexagon(this, adjacencies[i], true);
-        emptyHex.draw(true);
-      }
-    }
-  }
 }
 
 function testAdjacency() {
@@ -145,11 +109,4 @@ function testAdjacency() {
     const hex = new Hexagon(hexagon, adjacency, true);
     hex.draw(false);
   });
-}
-
-function testEmptyAdjacents() {
-  const hexagon = new Hexagon(100, 100, false);
-  hexagon.draw();
-
-  hexagon.drawEmptyAdjacents();
 }
