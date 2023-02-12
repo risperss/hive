@@ -1,54 +1,53 @@
+// if (adjacency === "right") {
+//     this.x = parentHexagon.x + 2 * parentHexagon.r;
+//     this.y = parentHexagon.y;
+//   } else if (adjacency === "left") {
+//     this.x = parentHexagon.x - 2 * parentHexagon.r;
+//     this.y = parentHexagon.y;
+//   } else if (adjacency === "northeast") {
+//     this.x = parentHexagon.x + parentHexagon.r;
+//     this.y = parentHexagon.y - 1.5 * parentHexagon.R;
+//   } else if (adjacency === "northwest") {
+//     this.x = parentHexagon.x - parentHexagon.r;
+//     this.y = parentHexagon.y - 1.5 * parentHexagon.R;
+//   } else if (adjacency === "southeast") {
+//     this.x = parentHexagon.x + parentHexagon.r;
+//     this.y = parentHexagon.y + 1.5 * parentHexagon.R;
+//   } else if (adjacency === "southwest") {
+//     this.x = parentHexagon.x - parentHexagon.r;
+//     this.y = parentHexagon.y + 1.5 * parentHexagon.R;
+//   } else {
+//     throw new Error("Invalid adjacency value");
+//   }
+// Saving above for later
+
 class Hexagon {
   // TODO: pass in a object this is a quick hack
-  constructor(p1, p2, relative) {
+  constructor(col, row, r, empty) {
     const M_COS_30 = 0.8660254037844386;
-    this.r = 30;
+    this.r = r;
     this.R = this.r / M_COS_30;
 
-    if (!relative) {
-      this.rawInit(p1, p2);
-    } else {
-      this.relativeInit(p1, p2);
-    }
-  }
+    this.col = col;
+    this.row = row;
+    this.empty = empty;
 
-  rawInit(x, y) {
-    this.x = x;
-    this.y = y;
-  }
-
-  relativeInit(parentHexagon, adjacency) {
-    if (adjacency === "right") {
-      this.x = parentHexagon.x + 2 * parentHexagon.r;
-      this.y = parentHexagon.y;
-    } else if (adjacency === "left") {
-      this.x = parentHexagon.x - 2 * parentHexagon.r;
-      this.y = parentHexagon.y;
-    } else if (adjacency === "northeast") {
-      this.x = parentHexagon.x + parentHexagon.r;
-      this.y = parentHexagon.y - 1.5 * parentHexagon.R;
-    } else if (adjacency === "northwest") {
-      this.x = parentHexagon.x - parentHexagon.r;
-      this.y = parentHexagon.y - 1.5 * parentHexagon.R;
-    } else if (adjacency === "southeast") {
-      this.x = parentHexagon.x + parentHexagon.r;
-      this.y = parentHexagon.y + 1.5 * parentHexagon.R;
-    } else if (adjacency === "southwest") {
-      this.x = parentHexagon.x - parentHexagon.r;
-      this.y = parentHexagon.y + 1.5 * parentHexagon.R;
+    this.x = 1.5 * this.R * col;
+    if (col % 2 === 0) {
+      this.y = 2 * this.r * row;
     } else {
-      throw new Error("Invalid adjacency value");
+      this.y = 2 * this.r * row + this.r;
     }
   }
 
   coords() {
     const coords = [
-      [this.r, 0],
-      [0, 0.5 * this.R],
-      [0, 1.5 * this.R],
-      [this.r, 2 * this.R],
-      [2 * this.r, 1.5 * this.R],
-      [2 * this.r, 0.5 * this.R],
+      [0.5 * this.R, 0],
+      [0, this.r],
+      [0.5 * this.R, 2 * this.r],
+      [1.5 * this.R, 2 * this.r],
+      [2 * this.R, this.r],
+      [1.5 * this.R, 0],
     ];
 
     const translatedCoords = coords.map((element) => {
@@ -72,7 +71,7 @@ class Hexagon {
     return coordString.trim();
   }
 
-  draw(empty) {
+  draw() {
     const hexagon = document.createElementNS(
       "https://www.w3.org/2000/svg",
       "polygon"
@@ -80,8 +79,9 @@ class Hexagon {
 
     const points = this.coordsToString(this.coords(this.x, this.y));
     hexagon.setAttribute("points", points);
+    hexagon.setAttribute("stroke", "red");
 
-    if (empty) {
+    if (this.empty) {
       hexagon.setAttribute("fill", "none");
       hexagon.setAttribute("stroke", "black");
     }
@@ -92,21 +92,18 @@ class Hexagon {
   }
 }
 
-function testAdjacency() {
-  const hexagon = new Hexagon(100, 100, false);
-  hexagon.draw();
-
-  const adjacencies = [
-    "right",
-    "left",
-    "northeast",
-    "northwest",
-    "southeast",
-    "southwest",
+function testDrawFromIndex() {
+  const coords = [
+    [0, 0],
+    [0, 1],
+    [1, 1],
+    [0, 2],
   ];
 
-  adjacencies.forEach((adjacency) => {
-    const hex = new Hexagon(hexagon, adjacency, true);
-    hex.draw(false);
+  coords.forEach((coord) => {
+    const [col, row] = coord;
+
+    const hexagon = new Hexagon(col, row, 30);
+    hexagon.draw();
   });
 }
