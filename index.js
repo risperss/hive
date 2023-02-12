@@ -1,21 +1,22 @@
 class Hexagon {
   constructor(x, y) {
+    const M_COS_30 = 0.8660254037844386;
+
     this.r = 30;
+    this.R = this.r / M_COS_30;
+
     this.x = x;
     this.y = y;
   }
 
   coords() {
-    const M_COS_30 = 0.8660254037844386;
-    const R = this.r / M_COS_30;
-
     const coords = [
       [this.r, 0],
-      [0, 0.5 * R],
-      [0, 1.5 * R],
-      [this.r, 2 * R],
-      [2 * this.r, 1.5 * R],
-      [2 * this.r, 0.5 * R],
+      [0, 0.5 * this.R],
+      [0, 1.5 * this.R],
+      [this.r, 2 * this.R],
+      [2 * this.r, 1.5 * this.R],
+      [2 * this.r, 0.5 * this.R],
     ];
 
     const translatedCoords = coords.map((element) => {
@@ -54,7 +55,7 @@ class Hexagon {
   }
 }
 
-function hexagonTouching(hexagon, adjacency) {
+function newAdjacent(hexagon, adjacency) {
   let x, y;
 
   if (adjacency === "right") {
@@ -63,7 +64,40 @@ function hexagonTouching(hexagon, adjacency) {
   } else if (adjacency === "left") {
     x = hexagon.x - 2 * hexagon.r;
     y = hexagon.y;
+  } else if (adjacency === "northeast") {
+    x = hexagon.x + hexagon.r;
+    y = hexagon.y - 1.5 * hexagon.R;
+  } else if (adjacency === "northwest") {
+    x = hexagon.x - hexagon.r;
+    y = hexagon.y - 1.5 * hexagon.R;
+  } else if (adjacency === "southeast") {
+    x = hexagon.x + hexagon.r;
+    y = hexagon.y + 1.5 * hexagon.R;
+  } else if (adjacency === "southwest") {
+    x = hexagon.x - hexagon.r;
+    y = hexagon.y + 1.5 * hexagon.R;
+  } else {
+    return;
   }
 
   return new Hexagon(x, y);
+}
+
+function testAdjacency() {
+  const hexagon = new Hexagon(100, 100);
+  hexagon.draw();
+
+  const adjacencies = [
+    "right",
+    "left",
+    "northeast",
+    "northwest",
+    "southeast",
+    "southwest",
+  ];
+
+  adjacencies.forEach((adjacency) => {
+    const hex = newAdjacent(hexagon, adjacency);
+    hex.draw();
+  });
 }
