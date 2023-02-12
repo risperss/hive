@@ -53,3 +53,17 @@ class Hexagon {
     document.getElementById("board").innerHTML += "";
   }
 }
+
+function hexagonTouching(hexagon, adjacency) {
+  let x, y;
+
+  if (adjacency === "right") {
+    x = hexagon.x + 2 * hexagon.r;
+    y = hexagon.y;
+  } else if (adjacency === "left") {
+    x = hexagon.x - 2 * hexagon.r;
+    y = hexagon.y;
+  }
+
+  return new Hexagon(x, y);
+}
