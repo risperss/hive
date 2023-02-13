@@ -94,19 +94,14 @@ class Hexagon {
     }
   }
 
-  rerender() {
-    this.initialState = this.state;
-    this.domObject.remove();
-    this.initDomObject();
-  }
-
   hasChanged() {
     return this.initialState != this.state;
   }
 
   draw() {
     if (this.hasChanged()) {
-      this.rerender();
+      this.setFill();
+      this.initialState = this.state;
     }
   }
 }
