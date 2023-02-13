@@ -49,7 +49,6 @@ class Hexagon {
     this.setFill();
 
     document.getElementById("board").appendChild(this.domObject);
-    document.getElementById("board").innerHTML += "";
   }
 
   coords() {
@@ -131,7 +130,7 @@ function testDrawFromIndex() {
 
 class Board {
   constructor(cols, rows) {
-    this.inradius = 10;
+    this.inradius = 4;
     this.cols = cols;
     this.rows = 2 * rows;
 
@@ -197,6 +196,7 @@ class Board {
         this.getHexagon(col, row).draw();
       }
     }
+    document.getElementById("board").innerHTML += "";
   }
 
   calculateBorder() {
