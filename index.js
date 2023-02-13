@@ -1,5 +1,5 @@
 class Hexagon {
-  constructor(col, row, inradius, empty, adjacent) {
+  constructor(col, row, inradius) {
     const M_COS_30 = 0.8660254037844386;
     this.inradius = inradius;
     this.circumradius = this.inradius / M_COS_30;
@@ -7,16 +7,9 @@ class Hexagon {
     this.col = col;
     this.row = row;
 
-    // state
-    this.state = {};
-    this.state.empty = empty;
-    this.state.adjacent = adjacent;
-
     // Using doubled height coordinates https://www.redblobgames.com/grids/hexagons/#coordinates-doubled
     this.x = 1.5 * this.circumradius * col;
     this.y = this.inradius * row;
-
-    this.initialState = structuredClone(this.state);
 
     this.initDomObject();
   }
@@ -45,8 +38,7 @@ class Hexagon {
       "polygon"
     );
     this.domObject.setAttribute("points", points);
-    this.domObject.setAttribute("stroke", "red");
-    this.setFill();
+    this.setColoring("gray", "red");
 
     document.getElementById("board").appendChild(this.domObject);
   }
@@ -82,27 +74,17 @@ class Hexagon {
     return coordString.trim();
   }
 
-  setFill() {
-    if (!this.getEmpty()) {
-      this.domObject.setAttribute("fill", "black");
-    } else {
-      if (this.getAdjacent()) {
-        this.domObject.setAttribute("fill", "yellow");
-      } else {
-        this.domObject.setAttribute("fill", "gray");
-      }
-    }
+  setFill(color) {
+    this.domObject.setAttribute("fill", color);
   }
 
-  hasChanged() {
-    return this.initialState != this.state;
+  setStroke(color) {
+    this.domObject.setAttribute("stroke", color);
   }
 
-  draw() {
-    if (this.hasChanged()) {
-      this.setFill();
-      this.initialState = this.state;
-    }
+  setColoring(fillColor, strokeColor) {
+    this.setFill(fillColor);
+    this.setStroke(strokeColor);
   }
 }
 
@@ -123,9 +105,78 @@ function testDrawFromIndex() {
   });
 }
 
+/*
+Piece Types:
+Queen: "queen"
+Beetle: "beetle"
+Grasshopper: "grasshopper"
+Spider: "spider"
+Soldier Ant: "ant"
+
+Piece Colors:
+White: "white"
+*/
+class Piece {
+  constructor(col, row, pieceType, isWhite, height) {
+    this.col = col;
+    this.row = row;
+    this.pieceType = pieceType;
+    this.isWhite = isWhite;
+    this.height = height; // For beetles
+  }
+}
+
+class Node {
+  constructor(col, row) {
+    this.col = col;
+    this.row = row;
+    this.pieces = [];
+    this.hexagon = new Hexagon(col, row, 10);
+  }
+
+  push(piece) {
+    const pieces = this.pieces.slice();
+    this.pieces = pieces.concat([piece]);
+  }
+
+  pop() {
+    if (!this.isOccupied()) {
+      return;
+    }
+    const pieces = this.pieces.slice(0, this.pieces.length - 1);
+    this.pieces = pieces;
+  }
+
+  getTopPiece() {
+    if (this.isOccupied()) {
+      return this.pieces[0];
+    } else {
+      return null;
+    }
+  }
+
+  isOccupied() {
+    return this.pieces.length;
+  }
+
+  setHexagonFill() {
+    if (!this.isOccupied()) {
+      this.hexagon.setFill("gray");
+      return;
+    }
+    const pieceColors = {
+      queen: "yellow",
+      beetle: "purple",
+      grasshopper: "green",
+      spider: "brown",
+      ant: "blue",
+    };
+    this.hexagon.setFill(pieceColors[this.getTopPiece()]);
+  }
+}
+
 class Board {
   constructor(cols, rows) {
-    this.inradius = 4;
     this.cols = cols;
     this.rows = 2 * rows;
 
@@ -137,13 +188,7 @@ class Board {
 
     for (let col = 0; col < this.cols; col++) {
       for (let row = col % 2; row < this.rows; row += 2) {
-        this.board[col][row] = new Hexagon(
-          col,
-          row,
-          this.inradius,
-          true,
-          false
-        );
+        this.board[col][row] = new Node(col, row);
       }
     }
   }
@@ -161,39 +206,34 @@ class Board {
     }
   }
 
-  getHexagon(col, row) {
+  getNode(col, row) {
     this.validateCoord(col, row);
 
     return this.board[col][row];
   }
 
-  setHexagon(col, row) {
+  pushPiece(col, row, piece) {
     this.validateCoord(col, row);
 
-    const hexagon = this.getHexagon(col, row);
-
-    hexagon.setEmpty(false);
-    hexagon.setAdjacent(false);
+    const node = this.getNode(col, row);
+    node.push(piece);
   }
 
-  resetHexagon(col, row) {
+  popPiece(col, row) {
     this.validateCoord(col, row);
-
-    const hexagon = this.getHexagon(col, row);
-
-    hexagon.setEmpty(true);
-    hexagon.setAdjacent(false);
+    this.getNode(col, row).pop();
   }
 
   draw() {
     for (let col = 0; col < this.cols; col++) {
       for (let row = col % 2; row < this.rows; row += 2) {
-        this.getHexagon(col, row).draw();
+        this.getNode(col, row).setHexagonFill();
       }
     }
     document.getElementById("board").innerHTML += "";
   }
 
+  // This is just here for debugging, don't intend to use long term
   calculateBorder() {
     const adjacentsCoords = [
       [1, 1],
@@ -206,17 +246,17 @@ class Board {
 
     for (let col = 0; col < this.cols; col++) {
       for (let row = col % 2; row < this.rows; row += 2) {
-        const hexagon = this.getHexagon(col, row);
+        const node = this.getNode(col, row);
 
-        if (!hexagon.getEmpty()) {
+        if (node.isOccupied()) {
           adjacentsCoords.forEach((coord) => {
             const [adjCol, adjRow] = coord;
             const [c, r] = [col + adjCol, row + adjRow];
 
             if (this.isValidCoord(c, r)) {
-              const adjHexagon = this.getHexagon(c, r);
-              if (adjHexagon.getEmpty()) {
-                adjHexagon.setAdjacent(true);
+              const adjNode = this.getNode(c, r);
+              if (!adjNode.isOccupied()) {
+                adjNode.hexagon.setFill("pink");
               }
             }
           });
@@ -229,8 +269,7 @@ class Board {
 function testDrawBoard() {
   const board = new Board(40, 20);
 
-  board.setHexagon(2, 2);
-  board.getHexagon(2, 4).setAdjacent(true);
+  board.pushPiece(2, 2, "queen");
 
   board.draw();
 }
@@ -238,14 +277,14 @@ function testDrawBoard() {
 function testCalculateBorder() {
   const board = new Board(20, 20);
 
-  board.setHexagon(2, 2);
-  board.setHexagon(2, 4);
-  board.setHexagon(3, 5);
-  board.setHexagon(4, 6);
+  board.pushPiece(2, 2, "queen");
+  board.pushPiece(2, 4, "ant");
+  board.pushPiece(3, 5, "grasshopper");
+  board.pushPiece(4, 6, "beetle");
   board.calculateBorder();
 
-  board.setHexagon(10, 10);
-  board.resetHexagon(2, 4);
+  board.pushPiece(10, 10, "spider");
+  board.popPiece(2, 4);
   board.calculateBorder();
 
   board.draw();
