@@ -1,59 +1,53 @@
-class Hexagon {
-  constructor(col, row, inradius) {
-    const M_COS_30 = 0.8660254037844386;
-    this.inradius = inradius;
-    this.circumradius = this.inradius / M_COS_30;
+// Hexagon constants
+const M_INRADIUS = 15;
+const M_COS_30 = 0.8660254037844386;
+const M_CIRCUMRADIUS = M_INRADIUS / M_COS_30;
+const M_HEXAGON_COORDS = [
+  [0.5 * M_CIRCUMRADIUS, 0],
+  [0, M_INRADIUS],
+  [0.5 * M_CIRCUMRADIUS, 2 * M_INRADIUS],
+  [1.5 * M_CIRCUMRADIUS, 2 * M_INRADIUS],
+  [2 * M_CIRCUMRADIUS, M_INRADIUS],
+  [1.5 * M_CIRCUMRADIUS, 0],
+];
 
+// Game constants
+const M_MAX_PIECES = 22;
+
+// Board constants
+const M_MAX_COLS = M_MAX_PIECES + 2;
+const M_MAX_ROWS = 2 * M_MAX_PIECES + 2;
+
+class Hexagon {
+  constructor(col, row, onclickFunction) {
     this.col = col;
     this.row = row;
 
     // Using doubled height coordinates https://www.redblobgames.com/grids/hexagons/#coordinates-doubled
-    this.x = 1.5 * this.circumradius * col;
-    this.y = this.inradius * row;
+    this.x = 1.5 * M_CIRCUMRADIUS * col;
+    this.y = M_INRADIUS * row;
 
+    this.onclickFunction = onclickFunction;
     this.initDomObject();
   }
 
-  getEmpty() {
-    return this.state.empty;
-  }
-
-  setEmpty(empty) {
-    this.state.empty = empty;
-  }
-
-  setAdjacent(adjacent) {
-    this.state.adjacent = adjacent;
-  }
-
-  getAdjacent(adjacent) {
-    return this.state.adjacent;
-  }
-
   initDomObject() {
-    const points = this.coordsToString(this.coords(this.x, this.y));
-
     this.domObject = document.createElementNS(
       "https://www.w3.org/2000/svg",
       "polygon"
     );
-    this.domObject.setAttribute("points", points);
+    this.domObject.setAttribute(
+      "points",
+      this.coordsToString(this.coords(this.x, this.y))
+    );
+    this.domObject.setAttribute("class", "hexagon");
     this.setColoring("gray", "red");
 
     document.getElementById("board").appendChild(this.domObject);
   }
 
   coords() {
-    const coords = [
-      [0.5 * this.circumradius, 0],
-      [0, this.inradius],
-      [0.5 * this.circumradius, 2 * this.inradius],
-      [1.5 * this.circumradius, 2 * this.inradius],
-      [2 * this.circumradius, this.inradius],
-      [1.5 * this.circumradius, 0],
-    ];
-
-    const translatedCoords = coords.map((element) => {
+    const translatedCoords = M_HEXAGON_COORDS.map((element) => {
       let [eX, eY] = element;
 
       return [eX + this.x, eY + this.y];
@@ -115,6 +109,7 @@ Soldier Ant: "ant"
 
 Piece Colors:
 White: "white"
+Black: "black"
 */
 class Piece {
   constructor(col, row, pieceType, isWhite, height) {
@@ -127,11 +122,11 @@ class Piece {
 }
 
 class Node {
-  constructor(col, row) {
+  constructor(col, row, onclickFunction) {
     this.col = col;
     this.row = row;
     this.pieces = [];
-    this.hexagon = new Hexagon(col, row, 10);
+    this.hexagon = new Hexagon(col, row, onclickFunction);
   }
 
   push(piece) {
@@ -159,7 +154,8 @@ class Node {
     return this.pieces.length;
   }
 
-  setHexagonFill() {
+  // If you want to redraw in bulk
+  updateHexagon() {
     if (!this.isOccupied()) {
       this.hexagon.setFill("gray");
       return;
@@ -173,12 +169,19 @@ class Node {
     };
     this.hexagon.setFill(pieceColors[this.getTopPiece()]);
   }
+
+  // If you want to redraw in isolation
+  drawHexagon() {
+    // Maybe add check to see if state has changed
+    this.updateHexagon();
+    this.hexagon.domObject.innerHTML += "";
+  }
 }
 
 class Board {
-  constructor(cols, rows) {
-    this.cols = cols;
-    this.rows = 2 * rows;
+  constructor() {
+    this.cols = M_MAX_COLS;
+    this.rows = M_MAX_ROWS;
 
     this.board = new Array(this.cols);
 
@@ -188,9 +191,35 @@ class Board {
 
     for (let col = 0; col < this.cols; col++) {
       for (let row = col % 2; row < this.rows; row += 2) {
-        this.board[col][row] = new Node(col, row);
+        this.board[col][row] = new Node(col, row, this.onclickFunction);
       }
     }
+
+    this.setContainerDimensions();
+  }
+
+  setContainerDimensions() {
+    const maxCol = this.cols - 1;
+    let maxRow = this.rows - 1;
+
+    if (!this.isValidCoord(maxCol, maxRow)) {
+      maxRow -= 1;
+    }
+
+    const outermostNode = this.getNode(maxCol, maxRow);
+
+    const outermost_x = outermostNode.hexagon.x;
+    const outermost_y = outermostNode.hexagon.y;
+    const delta_x = 2 * M_CIRCUMRADIUS;
+    const delta_y = 2 * M_INRADIUS;
+
+    const x = outermost_x + delta_x;
+    const y = outermost_y + delta_y;
+
+    const boardObject = document.getElementById("board");
+
+    boardObject.setAttribute("width", `${x}px`);
+    boardObject.setAttribute("height", `${y}px`);
   }
 
   isValidCoord(col, row) {
@@ -227,7 +256,7 @@ class Board {
   draw() {
     for (let col = 0; col < this.cols; col++) {
       for (let row = col % 2; row < this.rows; row += 2) {
-        this.getNode(col, row).setHexagonFill();
+        this.getNode(col, row).updateHexagon();
       }
     }
     document.getElementById("board").innerHTML += "";
@@ -267,7 +296,7 @@ class Board {
 }
 
 function testDrawBoard() {
-  const board = new Board(40, 20);
+  const board = new Board();
 
   board.pushPiece(2, 2, "queen");
 
@@ -275,7 +304,7 @@ function testDrawBoard() {
 }
 
 function testCalculateBorder() {
-  const board = new Board(20, 20);
+  const board = new Board();
 
   board.pushPiece(2, 2, "queen");
   board.pushPiece(2, 4, "ant");
