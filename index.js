@@ -10,6 +10,36 @@ const M_HEXAGON_COORDS = [
   [2 * M_CIRCUMRADIUS, M_INRADIUS],
   [1.5 * M_CIRCUMRADIUS, 0],
 ];
+const M_HEXAGON_STYLES = {
+  null: {
+    fill: "none",
+    stroke: "none",
+  },
+  available: {
+    fill: "none",
+    stroke: "black",
+  },
+  queen: {
+    fill: "yellow",
+    stroke: "darkgoldenrod",
+  },
+  beetle: {
+    fill: "purple",
+    stroke: "darkpurple",
+  },
+  grasshopper: {
+    fill: "green",
+    stroke: "darkgreen",
+  },
+  spider: {
+    fill: "brown",
+    stroke: "darkbrown",
+  },
+  ant: {
+    fill: "blue",
+    stroke: "darkblue",
+  },
+};
 
 // Game constants
 const M_MAX_PIECES = 22;
@@ -41,7 +71,7 @@ class Hexagon {
       this.coordsToString(this.coords(this.x, this.y))
     );
     this.domObject.setAttribute("class", "hexagon");
-    this.setColoring("gray", "red");
+    this.setStyle(null);
 
     document.getElementById("board").appendChild(this.domObject);
   }
@@ -68,17 +98,11 @@ class Hexagon {
     return coordString.trim();
   }
 
-  setFill(color) {
-    this.domObject.setAttribute("fill", color);
-  }
+  setStyle(piece) {
+    const style = M_HEXAGON_STYLES[piece];
 
-  setStroke(color) {
-    this.domObject.setAttribute("stroke", color);
-  }
-
-  setColoring(fillColor, strokeColor) {
-    this.setFill(fillColor);
-    this.setStroke(strokeColor);
+    this.domObject.setAttribute("fill", style.fill);
+    this.domObject.setAttribute("stroke", style.stroke);
   }
 }
 
@@ -127,6 +151,7 @@ class Node {
     this.row = row;
     this.pieces = [];
     this.hexagon = new Hexagon(col, row, onclickFunction);
+    this.available = false;
   }
 
   push(piece) {
@@ -154,20 +179,24 @@ class Node {
     return this.pieces.length;
   }
 
+  setAvailable() {
+    this.available = true;
+  }
+
+  // Only needed if you're calculating available twice
+  // Not confident that's an actual use case... TBD
+  resetAvailable() {
+    this.available = false;
+  }
+
   // If you want to redraw in bulk
   updateHexagon() {
-    if (!this.isOccupied()) {
-      this.hexagon.setFill("gray");
-      return;
+    if (this.available) {
+      this.hexagon.setStyle("available");
+      this.available = false;
+    } else {
+      this.hexagon.setStyle(this.getTopPiece());
     }
-    const pieceColors = {
-      queen: "yellow",
-      beetle: "purple",
-      grasshopper: "green",
-      spider: "brown",
-      ant: "blue",
-    };
-    this.hexagon.setFill(pieceColors[this.getTopPiece()]);
   }
 
   // If you want to redraw in isolation
@@ -275,6 +304,12 @@ class Board {
 
     for (let col = 0; col < this.cols; col++) {
       for (let row = col % 2; row < this.rows; row += 2) {
+        this.getNode(col, row).resetAvailable();
+      }
+    }
+
+    for (let col = 0; col < this.cols; col++) {
+      for (let row = col % 2; row < this.rows; row += 2) {
         const node = this.getNode(col, row);
 
         if (node.isOccupied()) {
@@ -285,7 +320,7 @@ class Board {
             if (this.isValidCoord(c, r)) {
               const adjNode = this.getNode(c, r);
               if (!adjNode.isOccupied()) {
-                adjNode.hexagon.setFill("pink");
+                adjNode.setAvailable();
               }
             }
           });
