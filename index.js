@@ -10,36 +10,6 @@ const M_HEXAGON_COORDS = [
   [2 * M_CIRCUMRADIUS, M_INRADIUS],
   [1.5 * M_CIRCUMRADIUS, 0],
 ];
-const M_HEXAGON_STYLES = {
-  null: {
-    fill: "none",
-    stroke: "none",
-  },
-  available: {
-    fill: "none",
-    stroke: "black",
-  },
-  queen: {
-    fill: "yellow",
-    stroke: "darkgoldenrod",
-  },
-  beetle: {
-    fill: "purple",
-    stroke: "darkpurple",
-  },
-  grasshopper: {
-    fill: "green",
-    stroke: "darkgreen",
-  },
-  spider: {
-    fill: "brown",
-    stroke: "darkbrown",
-  },
-  ant: {
-    fill: "blue",
-    stroke: "darkblue",
-  },
-};
 
 // Game constants
 const M_MAX_PIECES = 22;
@@ -70,8 +40,7 @@ class Hexagon {
       "points",
       this.coordsToString(this.coords(this.x, this.y))
     );
-    this.domObject.setAttribute("class", "hexagon");
-    this.setStyle(null);
+    this.setStyle("empty");
 
     document.getElementById("board").appendChild(this.domObject);
   }
@@ -99,10 +68,11 @@ class Hexagon {
   }
 
   setStyle(piece) {
-    const style = M_HEXAGON_STYLES[piece];
-
-    this.domObject.setAttribute("fill", style.fill);
-    this.domObject.setAttribute("stroke", style.stroke);
+    if (!piece) {
+      this.domObject.className = "empty-hexagon";
+    } else {
+      this.domObject.className = `${piece}-hexagon`;
+    }
   }
 }
 
@@ -191,9 +161,9 @@ class Node {
 
   // If you want to redraw in bulk
   updateHexagon() {
-    if (this.available) {
+    if (!this.isOccupied() && this.available) {
       this.hexagon.setStyle("available");
-      this.available = false;
+      this.resetAvailable();
     } else {
       this.hexagon.setStyle(this.getTopPiece());
     }
@@ -349,6 +319,15 @@ function testCalculateBorder() {
 
   board.pushPiece(10, 10, "spider");
   board.popPiece(2, 4);
+  board.calculateBorder();
+
+  board.draw();
+}
+
+function testStartBoard() {
+  const board = new Board();
+
+  board.pushPiece(9, 21, "queen");
   board.calculateBorder();
 
   board.draw();
