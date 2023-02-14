@@ -41,6 +41,8 @@ class Hexagon {
       this.coordsToString(this.coords(this.x, this.y))
     );
     this.setStyle("empty");
+    this.domObject.setAttribute("col", this.col);
+    this.domObject.setAttribute("row", this.row);
 
     document.getElementById("board").appendChild(this.domObject);
   }
@@ -195,6 +197,20 @@ class Board {
     }
 
     this.setContainerDimensions();
+    this.delegateEvents();
+  }
+
+  delegateEvents() {
+    this.domObject = document.getElementById("board");
+    this.domObject.addEventListener(
+      "click",
+      (e) => {
+        const col = e.target.getAttribute("col");
+        const row = e.target.getAttribute("row");
+        console.log(`Clicked (${col}, ${row})`);
+      },
+      false
+    );
   }
 
   setContainerDimensions() {
